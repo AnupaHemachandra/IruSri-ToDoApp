@@ -1,9 +1,5 @@
 package com.irusri.TodoApp.service;
 
-import com.irusri.TodoApp.CustomExceptions.CustomerAlreadyExistsException;
-import com.irusri.TodoApp.CustomExceptions.NoSuchCustomerExistsException;
-import com.irusri.TodoApp.CustomExceptions.UserValidationError;
-import com.irusri.TodoApp.model.ToDo;
 import com.irusri.TodoApp.model.UserPrincipal;
 import com.irusri.TodoApp.model.Users;
 import com.irusri.TodoApp.repo.UsersRepo;
@@ -37,10 +33,6 @@ public class UsersService {
 
     public Users registerUser(Users user){
         logger.info("Request from Client fro new user creation!");
-        Users existingUser = repo.findByUsername(user.getUsername());
-        if (existingUser != null){
-            throw new CustomerAlreadyExistsException("A user with the given username already exists. Given username: " + user.getUsername());
-        }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
@@ -51,24 +43,16 @@ public class UsersService {
     }
 
     public String verify(Users user) {
-        try{
             logger.info(user.getUsername() + " trying to authenticate!");
-            Users existingUser = repo.findByUsername(user.getUsername());
-            if(existingUser == null){
-                throw new NoSuchCustomerExistsException(user.getUsername() + ": No such user found in the Database!");
-            }
             Authentication authentication =
                     authManager
                             .authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
 
-            if(!authentication.isAuthenticated()){
-                throw new Exception("Falied to authenticate the user!");
+            if(authentication.isAuthenticated()){
+                logger.info(user.getUsername() + " successfully authenticated!");
+                return jwtService.generateToken(user.getUsername());
             }
-            logger.info(user.getUsername() + " successfully authenticated!");
-            return jwtService.generateToken(user.getUsername());
-        } catch(Exception ex){
-            throw new UserValidationError(ex.getMessage());
-        }
+        return null;
     }
 
     public boolean updatePassword(String newPassword, String confirmNewPassword, String currentPassword, UserPrincipal userprincipal) throws Exception {

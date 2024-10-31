@@ -1,7 +1,5 @@
 package com.irusri.TodoApp.controller;
 
-import com.irusri.TodoApp.CustomExceptions.CustomerAlreadyExistsException;
-import com.irusri.TodoApp.CustomExceptions.NoSuchCustomerExistsException;
 import com.irusri.TodoApp.model.UserPrincipal;
 import com.irusri.TodoApp.model.Users;
 import com.irusri.TodoApp.service.UsersService;
