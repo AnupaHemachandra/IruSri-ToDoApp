@@ -1,5 +1,7 @@
 package com.irusri.TodoApp.service;
 
+import com.irusri.TodoApp.dto.request.RequestUserDTO;
+import com.irusri.TodoApp.dto.response.ResponseUserDTO;
 import com.irusri.TodoApp.model.UserPrincipal;
 import com.irusri.TodoApp.model.Users;
 import com.irusri.TodoApp.repo.UsersRepo;
@@ -9,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -31,52 +32,73 @@ public class UsersService {
 
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
-    public Users registerUser(Users user){
-        logger.info("Request from Client fro new user creation!");
-
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-
-        Users newUser = repo.save(user);
-        logger.info("New user created successfully. New user username: " + user.getUsername());
-
-        return newUser;
+    private ResponseUserDTO convertToResponseDTO(Users user){
+        return new ResponseUserDTO(user.getId(), user.getUsername());
     }
 
-    public String verify(Users user) {
-            logger.info(user.getUsername() + " trying to authenticate!");
-            Authentication authentication =
-                    authManager
-                            .authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
+    private Users convertToEntity(RequestUserDTO userdto){
+        Users convertedEntity = new Users();
+        convertedEntity.setUsername(userdto.getUsername());
 
-            if(authentication.isAuthenticated()){
-                logger.info(user.getUsername() + " successfully authenticated!");
-                return jwtService.generateToken(user.getUsername());
-            }
+        return convertedEntity;
+    }
+
+    public ResponseUserDTO registerUser(RequestUserDTO user){
+        logger.info("Request from Client for new user creation!");
+
+        Users convertedUserEntity = convertToEntity(user);
+
+        convertedUserEntity.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        Users newUser = repo.save(convertedUserEntity);
+        logger.info("New user created successfully. New user username: " + convertedUserEntity.getUsername());
+
+        return convertToResponseDTO(newUser);
+    }
+
+    public String verify(RequestUserDTO user) {
+//        Users user = convertToEntity(userDTO);
+        logger.info(user.getUsername() + " trying to authenticate!");
+        Authentication authentication =
+                authManager
+                        .authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
+
+        if(authentication.isAuthenticated()){
+            logger.info(user.getUsername() + " successfully authenticated!");
+            return jwtService.generateToken(user.getUsername());
+        }
         return null;
     }
 
-    public boolean updatePassword(String newPassword, String confirmNewPassword, String currentPassword, UserPrincipal userprincipal) throws Exception {
-        Users updatePwUser = repo.findByUsername(userprincipal.getUsername());
-        updatePwUser.setPassword(passwordEncoder.encode(newPassword));
+    public ResponseUserDTO updatePassword(RequestUserDTO userDTO) throws Exception {
+        Users updatePwUser = repo.findByUsername(userDTO.getUsername());
 
-        if(!Objects.equals(newPassword, confirmNewPassword) && !Objects.equals(passwordEncoder.encode(currentPassword), updatePwUser.getPassword())){
+        System.out.println("Checking null: " + updatePwUser);
+
+        if (updatePwUser == null) {
+            throw new Exception("User not found!"); // Add this check if the user is not found
+        }
+
+        if(!Objects.equals(userDTO.getNewPassword(), userDTO.getConfirmNewPassword()) && !Objects.equals(passwordEncoder.encode(userDTO.getPassword()), updatePwUser.getPassword())){
             throw new Exception("Error occurred while updating the password! Check your credentials.");
         }
-        Users pwUpdatedUser = repo.save(updatePwUser);
 
-        if(repo.findById(pwUpdatedUser.getId()).isPresent()){
-            return true;
-        }
-        throw new Exception("Failed to update password!");
+        updatePwUser.setPassword(passwordEncoder.encode(userDTO.getNewPassword()));
+
+        System.out.println("Checking null: " + updatePwUser);
+
+        Users finalPwUpdatedUser = repo.save(updatePwUser);
+
+        return convertToResponseDTO(finalPwUpdatedUser);
     }
 
-    public boolean deleteUser(String password, UserPrincipal user) throws Exception {
-        if(Objects.equals(passwordEncoder.encode(password), user.getPassword())){
+    public boolean deleteUser(UserPrincipal user) throws Exception {
+        try{
             Users userObj = repo.findByUsername(user.getUsername());
             repo.deleteById(userObj.getId());
-
             return true;
+        } catch(Exception ex){
+            return false;
         }
-        throw new Exception("Invalid password!");
     }
 }

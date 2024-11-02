@@ -4,6 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.irusri.TodoApp.CustomExceptions.DBFaliureException;
 import com.irusri.TodoApp.CustomExceptions.NoItemsFoundException;
+import com.irusri.TodoApp.dto.request.RequestToDoDTO;
+import com.irusri.TodoApp.dto.request.RequestUserDTO;
+import com.irusri.TodoApp.dto.response.ResponseToDoDTO;
+import com.irusri.TodoApp.dto.response.ResponseUserDTO;
 import com.irusri.TodoApp.model.ToDo;
 import com.irusri.TodoApp.model.Users;
 import com.irusri.TodoApp.repo.ToDoRepo;
@@ -12,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -19,6 +24,8 @@ import org.springframework.stereotype.Service;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class ToDoService {
@@ -30,7 +37,45 @@ public class ToDoService {
     @Autowired
     UsersRepo userrepo;
 
-    public List<ToDo> getToDoByUsername(String username, String sortingField, Optional<Boolean> descending){
+    private ResponseToDoDTO convertToResponseDTO(ToDo todo){
+        return new ResponseToDoDTO(
+                todo.getId(),
+                todo.getTitle(),
+                todo.getDescription(),
+                todo.getPriority(),
+                todo.getDueDate(),
+                todo.getStatus(),
+                todo.getTimezone(),
+                todo.getCreatedDate(),
+                todo.getUpdatedDate(),
+                todo.getCategory(),
+                todo.getCompletionDate(),
+                todo.getTags(),
+                todo.getReminder()
+        );
+    }
+
+    private ToDo convertToEntity(RequestToDoDTO tododto){
+        ToDo convertedEntity = new ToDo();
+        convertedEntity.setTimezone(tododto.getTimezone());
+        convertedEntity.setStatus(tododto.getStatus());
+        convertedEntity.setId(tododto.getId());
+        convertedEntity.setCategory(tododto.getCategory());
+        convertedEntity.setTitle(tododto.getTitle());
+        convertedEntity.setDescription(tododto.getDescription());
+        convertedEntity.setPriority(tododto.getPriority());
+        convertedEntity.setDueDate(tododto.getDueDate());
+        convertedEntity.setStatus(tododto.getStatus());
+        convertedEntity.setCategory(tododto.getCategory());
+        convertedEntity.setCompletionDate(tododto.getCompletionDate());
+        convertedEntity.setTags(tododto.getTags());
+        convertedEntity.setReminder(tododto.getReminder());
+        convertedEntity.setTimezone(tododto.getTimezone());
+
+        return convertedEntity;
+    }
+
+    public List<ResponseToDoDTO> getToDoByUsername(String username, String sortingField, Optional<Boolean> descending){
         boolean isDescendingRequested = descending.orElse(false);
 
         List<ToDo> todos = null;
@@ -50,11 +95,14 @@ public class ToDoService {
             //Error logging is managed in the Exception handler.
             throw new NoItemsFoundException("No items found for the given user: " + username);
         }
+
         logger.info(username + " successfully retrieved particular user's all ToDo items!");
-        return todos;
+        return (List<ResponseToDoDTO>) todos.stream()
+                .map(this::convertToResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public Page<ToDo> getToDoByUsername(String username, int offset, int pageSize, String sortingField, Optional<Boolean> descending){
+    public Page<ResponseToDoDTO> getToDoByUsername(String username, int offset, int pageSize, String sortingField, Optional<Boolean> descending){
         boolean isDescendingRequested = descending.orElse(false);
 
         Sort sort = isDescendingRequested ? Sort.by(sortingField).ascending() : Sort.by(sortingField).descending();
@@ -67,10 +115,16 @@ public class ToDoService {
         }
 
         logger.info(username + " successfully retrieved particular user's all ToDo items with pagination enabled!");
-        return todos;
+
+        return todos.map(new Function<ToDo, ResponseToDoDTO>() {
+            @Override
+            public ResponseToDoDTO apply(ToDo toDo) {
+                return convertToResponseDTO(toDo);
+            }
+        });
     }
 
-    public ToDo getToDoById(int id, String username) {
+    public ResponseToDoDTO getToDoById(int id, String username) {
         logger.info(username + " trying to retrieve a ToDo item by id!");
         ToDo todo = repo.findById(id).orElse(null);
         if(todo == null){
@@ -78,10 +132,10 @@ public class ToDoService {
         }
 
         logger.info(username + " successfully accessed a ToDo item by id!");
-        return todo;
+        return convertToResponseDTO(todo);
     }
 
-    public List<ToDo> searchToDos(String username, String keyword){
+    public List<ResponseToDoDTO> searchToDos(String username, String keyword){
         logger.info(username + " trying to retrieve ToDo items by keyword. Keyword: " + keyword);
         List<ToDo> todos = repo.searchToDosByKeyword(username, keyword);
         if(todos.isEmpty()){
@@ -89,10 +143,27 @@ public class ToDoService {
         }
 
         logger.info(username + " retrieved ToDo items by keyword successfully!");
-        return todos;
+        return todos.stream()
+                .map(this::convertToResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public Page<ToDo> searchToDos(String username, String keyword, int offset, int pageSize, String sortingField, Optional<Boolean> descending){
+    public ResponseToDoDTO trackTaskCompletion(String username, int id, String completionStatus){
+        logger.info(username + " trying to update the task completion status.");
+
+        ToDo todo = repo.findById(id).orElse(null);
+
+        if(todo == null){
+            throw new NoItemsFoundException("No item found for the given Id!");
+        }
+
+        todo.setStatus(completionStatus);
+
+        ToDo todoStatusUpdated = repo.save(todo);
+        return convertToResponseDTO(todoStatusUpdated);
+    }
+
+    public Page<ResponseToDoDTO> searchToDos(String username, String keyword, int offset, int pageSize, String sortingField, Optional<Boolean> descending){
         logger.info(username + " trying to retrieve ToDo items by keyword and pagination and sorting enabled. Keyword: " + keyword);
         boolean isDescendingRequested = descending.orElse(false);
 
@@ -106,11 +177,18 @@ public class ToDoService {
         }
 
         logger.info(username + " retrieved ToDo items by keyword successfully!");
-        return todos;
+        return todos.map(new Function<ToDo, ResponseToDoDTO>() {
+            @Override
+            public ResponseToDoDTO apply(ToDo toDo) {
+                return convertToResponseDTO(toDo);
+            }
+        });
     }
 
-    public ToDo createNewToDo(ToDo todo, String username) throws Exception {
+    public ResponseToDoDTO createNewToDo(RequestToDoDTO tododto, String username) throws Exception {
         logger.info(username + " trying to create a new ToDo item!");
+
+        ToDo todo = convertToEntity(tododto);
         Users user = userrepo.findByUsername(username);
         ZoneId zoneId = ZoneId.of(todo.getTimezone());
         ZonedDateTime currentTime = ZonedDateTime.now(zoneId);
@@ -129,10 +207,10 @@ public class ToDoService {
         }
 
         logger.info(username + " successfully created a new ToDo item in the Database!");
-        return newItem;
+        return convertToResponseDTO(newItem);
     }
 
-    public ToDo updateToDo(ToDo todo, int id, String username) {
+    public ResponseToDoDTO updateToDo(RequestToDoDTO todo, int id, String username) {
         logger.warn(username + " trying to update a new ToDo item!");
         String newTitle = todo.getTitle();
         String description = todo.getDescription();
@@ -175,18 +253,19 @@ public class ToDoService {
         oldToDo.setUpdatedDate(currentTime);
         oldToDo.setUpdatedDate(currentTime);
         oldToDo.setUpdatedDate(currentTime);
+//        oldToDo.setAssignedUser(oldToDo.getAssignedUser());
 
         ToDo updatedItem = null;
 
         try{
-            logger.warn(username + " updating a ToDo item in  the Database!");
-            updatedItem = repo.save(todo);
+            logger.warn(username + " updating a ToDo item in the Database!");
+            updatedItem = repo.save(oldToDo);
         } catch(Exception ex){
             throw new DBFaliureException(ex.getMessage());
         }
 
         logger.warn(username + " successfully updated a ToDo item in  the Database!");
-        return updatedItem;
+        return convertToResponseDTO(updatedItem);
     }
 
     public boolean deleteToDo(int id, String username) {

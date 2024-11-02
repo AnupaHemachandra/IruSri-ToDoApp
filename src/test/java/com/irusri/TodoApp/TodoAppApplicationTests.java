@@ -13,16 +13,6 @@ import static org.mockito.Mockito.when;
 @SpringBootTest
 class TodoAppApplicationTests {
 
-	@Autowired
-	private UsersService usersService;
-
-	@MockBean
-	private UsersRepo usersRepo;
-
-	public void registerUserTest(){
-		when(usersRepo.findAll()).thenReturn(value);
-	}
-
 	@Test
 	void contextLoads() {
 	}

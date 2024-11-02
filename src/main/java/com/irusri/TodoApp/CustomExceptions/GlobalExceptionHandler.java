@@ -44,6 +44,7 @@ public class GlobalExceptionHandler {
             return new ResponseEntity<>(error, HttpStatusCode.valueOf(403));
         }
 
+        error = new ApiError(404, ex.getMessage(), new Date());
         return new ResponseEntity<>(error, HttpStatusCode.valueOf(500));
     }
 }

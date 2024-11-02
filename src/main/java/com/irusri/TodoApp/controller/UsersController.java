@@ -1,5 +1,7 @@
 package com.irusri.TodoApp.controller;
 
+import com.irusri.TodoApp.dto.request.RequestUserDTO;
+import com.irusri.TodoApp.dto.response.ResponseUserDTO;
 import com.irusri.TodoApp.model.UserPrincipal;
 import com.irusri.TodoApp.model.Users;
 import com.irusri.TodoApp.service.UsersService;
@@ -10,21 +12,21 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/v1/auth")
 public class UsersController {
 
     @Autowired
     private UsersService service;
 
     @PostMapping(value = "/register")
-    public ResponseEntity<Users> registerUser(@RequestBody Users user){
-        Users registeredUser = service.registerUser(user);
+    public ResponseEntity<ResponseUserDTO> registerUser(@RequestBody RequestUserDTO user){
+        ResponseUserDTO registeredUser = service.registerUser(user);
 
         return new ResponseEntity<>(registeredUser, HttpStatus.OK);
     }
 
     @PostMapping(value = "/login", produces = {"application/json"})
-    public ResponseEntity<String> loginUser(@RequestBody Users user) throws Exception {
+    public ResponseEntity<String> loginUser(@RequestBody RequestUserDTO user) throws Exception {
         String token = service.verify(user);
 
         return new ResponseEntity<>(token, HttpStatus.OK);
@@ -35,18 +37,17 @@ public class UsersController {
         return "JWT validating correctly!";
     }
 
-    @PutMapping("update-password")
-    public ResponseEntity<?> updatePassword(@RequestBody String newPassword, @RequestBody String confirmNewPassword, @RequestBody String currentPassword) throws Exception {
-        UserPrincipal user = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        boolean result = service.updatePassword(newPassword, confirmNewPassword, currentPassword, user);
+    @PatchMapping("update-password")
+    public ResponseEntity<ResponseUserDTO> updatePassword(@RequestBody RequestUserDTO userDTO) throws Exception {
+        ResponseUserDTO result = service.updatePassword(userDTO);
 
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
     @DeleteMapping("")
-    public ResponseEntity<?> deleteUser(@RequestBody String password) throws Exception {
+    public ResponseEntity<?> deleteUser() throws Exception {
         UserPrincipal user = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        boolean result = service.deleteUser(password, user);
+        boolean result = service.deleteUser(user);
 
         return new ResponseEntity<>(result, HttpStatus.OK);
     }

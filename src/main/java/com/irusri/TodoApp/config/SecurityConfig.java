@@ -40,7 +40,7 @@ public class SecurityConfig {
         return http
                 .csrf(customizer -> customizer.disable())
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers("/auth/register", "/auth/login")
+                        .requestMatchers("/v1/auth/register", "/v1/auth/login", "/swagger-ui/index.html#/*", "/swagger-ui.html/*", "/api-docs/*")
                         .permitAll()
                         .anyRequest().authenticated())  //By default we have username password authentication here.
                 .httpBasic(Customizer.withDefaults())
