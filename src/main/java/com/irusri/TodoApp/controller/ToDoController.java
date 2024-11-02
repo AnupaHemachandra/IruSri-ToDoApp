@@ -79,7 +79,7 @@ public class ToDoController {
         UserPrincipal user = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         ResponseToDoDTO createdToDo = service.createNewToDo(todo, user.getUsername());
 
-        return new ResponseEntity<>(createdToDo, HttpStatus.OK);
+        return new ResponseEntity<>(createdToDo, HttpStatus.CREATED);
     }
 
     @PutMapping("")
@@ -87,7 +87,7 @@ public class ToDoController {
         UserPrincipal user = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         ResponseToDoDTO updatedToDo = service.updateToDo(todo, id, user.getUsername());
 
-        return new ResponseEntity<>(updatedToDo, HttpStatus.OK);
+        return new ResponseEntity<>(updatedToDo, HttpStatus.CREATED);
     }
 
     @PatchMapping("/completion")
@@ -95,7 +95,7 @@ public class ToDoController {
         UserPrincipal user = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         ResponseToDoDTO updatedToDo = service.trackTaskCompletion(user.getUsername(), id, status);
 
-        return new ResponseEntity<>(updatedToDo, HttpStatus.OK);
+        return new ResponseEntity<>(updatedToDo, HttpStatus.CREATED);
     }
 
     @DeleteMapping("")

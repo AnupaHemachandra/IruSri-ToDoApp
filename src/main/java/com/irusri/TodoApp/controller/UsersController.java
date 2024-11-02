@@ -22,7 +22,7 @@ public class UsersController {
     public ResponseEntity<ResponseUserDTO> registerUser(@RequestBody RequestUserDTO user){
         ResponseUserDTO registeredUser = service.registerUser(user);
 
-        return new ResponseEntity<>(registeredUser, HttpStatus.OK);
+        return new ResponseEntity<>(registeredUser, HttpStatus.CREATED);
     }
 
     @PostMapping(value = "/login", produces = {"application/json"})
@@ -41,7 +41,7 @@ public class UsersController {
     public ResponseEntity<ResponseUserDTO> updatePassword(@RequestBody RequestUserDTO userDTO) throws Exception {
         ResponseUserDTO result = service.updatePassword(userDTO);
 
-        return new ResponseEntity<>(result, HttpStatus.OK);
+        return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
 
     @DeleteMapping("")
