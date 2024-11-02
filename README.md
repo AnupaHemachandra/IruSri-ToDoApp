@@ -2,6 +2,12 @@
 
 This is a ToDo application built using Spring Boot, Spring Data JPA, MySQL, and Spring Security with JWT authentication and authorization.
 
+### This Applications test api calls are given below for localhost url. If you setup the application locally and run it following the steps given below, you can keep the domain as localhost.
+### This application is also hosted in a EC2 instance. If you test the apis with that instance, replace the localhost domain with this ip address:
+```dtd
+    52.91.39.165
+```
+
 ## Features
 
 - User registration and login with JWT-based authentication.
