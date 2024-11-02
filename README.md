@@ -4,6 +4,7 @@ This is a ToDo application built using Spring Boot, Spring Data JPA, MySQL, and 
 
 ### This Applications test api calls are given below for localhost url. If you setup the application locally and run it following the steps given below, you can keep the domain as localhost.
 ### This application is also hosted in a EC2 instance. If you test the apis with that instance, replace the localhost domain with this ip address:
+### The Api descriptions are given at the bottom of this readme file. Also you can test apis with Swagger documentation: http://domain:8080/swagger-ui.html - (Username - anupa, Password - password)
 ```dtd
     52.91.39.165
 ```
