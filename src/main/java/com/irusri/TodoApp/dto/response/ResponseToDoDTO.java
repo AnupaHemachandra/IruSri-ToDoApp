@@ -18,6 +18,24 @@ public class ResponseToDoDTO {
     private ZonedDateTime completionDate;
     private String tags;
     private ZonedDateTime reminder;
+    private Users assignedUser;
+
+    public ResponseToDoDTO(int id, String title, String description, String priority, ZonedDateTime dueDate, String status, String timezone, ZonedDateTime createdDate, ZonedDateTime updatedDate, String category, ZonedDateTime completionDate, String tags, ZonedDateTime reminder, Users assignedUser) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.priority = priority;
+        this.dueDate = dueDate;
+        this.status = status;
+        this.timezone = timezone;
+        this.createdDate = createdDate;
+        this.updatedDate = updatedDate;
+        this.category = category;
+        this.completionDate = completionDate;
+        this.tags = tags;
+        this.reminder = reminder;
+        this.assignedUser = assignedUser;
+    }
 
     public ResponseToDoDTO(int id, String title, String description, String priority, ZonedDateTime dueDate, String status, String timezone, ZonedDateTime createdDate, ZonedDateTime updatedDate, String category, ZonedDateTime completionDate, String tags, ZonedDateTime reminder) {
         this.id = id;
@@ -141,5 +159,13 @@ public class ResponseToDoDTO {
 
     public void setReminder(ZonedDateTime reminder) {
         this.reminder = reminder;
+    }
+
+    public Users getAssignedUser() {
+        return assignedUser;
+    }
+
+    public void setAssignedUser(Users assignedUser) {
+        this.assignedUser = assignedUser;
     }
 }
